@@ -207,7 +207,7 @@ input[type="text"] {
   right: 15px;
   top: 50%;
   transform: translateY(-50%);
-  background: url('search.png') no-repeat center center;
+  background: url('/b_search2/search.png') no-repeat center center;
   background-size: 20px 20px;
   background-color: #007bff;
   border-radius: 50%;
@@ -222,7 +222,7 @@ input[type="text"] {
   left: -30px;
   top: 50%;
   transform: translateY(-50%);
-  background: url('home.png') no-repeat center center;
+  background: url('/b_search2/home.png') no-repeat center center;
   background-size: 20px 20px;
   background-color: #007bff;
   border-radius: 50%;
