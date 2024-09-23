@@ -4,7 +4,7 @@
       
       <!-- Search Page -->
       <div v-if="!searched" class="homepage-content">
-        <h1 class="title">Bilibili 多模态视频搜索工具</h1>
+        <h1 class="title">Bilibili 细粒度视频搜索工具</h1>
         <div class="search-modes">
           <label>
             <input type="radio" name="searchMode" value="subtitle" v-model="searchMode"> 字幕搜索
@@ -33,24 +33,48 @@
       <div v-if="searched && videos.length === 0" class="no-results">没有找到您搜索的内容！</div>
 
       <!-- Results Page -->
-      <div v-if="searched && videos.length > 0" class="video-container">
-        <iframe :src="currentVideoUrl" frameborder="no" allowfullscreen="true"></iframe>
-        <button
-          @click="prevVideo"
-          :disabled="currentIndex === 0"
-          class="nav-button prev"
-          :class="{ disabled: currentIndex === 0 }"
-        >
-          &#9664;
-        </button>
-        <button
-          @click="nextVideo"
-          :disabled="currentIndex === videos.length - 1"
-          class="nav-button next"
-          :class="{ disabled: currentIndex === videos.length - 1 }"
-        >
-          &#9654;
-        </button>
+      <div v-if="searched && videos.length > 0" class="results-container">
+        <div class="flex-container">
+          <div class="video-section">
+            <iframe :src="currentVideoUrl" frameborder="no" allowfullscreen="true"></iframe>
+            <button
+              @click="prevVideo"
+              :disabled="currentIndex === 0"
+              class="nav-button prev"
+              :class="{ disabled: currentIndex === 0 }"
+            >
+              &#9664;
+            </button>
+            <button
+              @click="nextVideo"
+              :disabled="currentIndex === videos.length - 1"
+              class="nav-button next"
+              :class="{ disabled: currentIndex === videos.length - 1 }"
+            >
+              &#9654;
+            </button>
+          </div>
+
+          <!-- Video List -->
+          <div class="video-list">
+            <ul>
+              <li 
+                v-for="(video, index) in videos" 
+                :key="index" 
+                @click="selectVideo(index)"
+                :class="{ 'current-video': index === currentIndex }"
+              >
+                {{ video.title }}
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Subtitle Section -->
+        <div class="subtitle-section">
+          <h3>上下文：{{ currentSubtitle }}</h3>
+        </div>
+
       </div>
     </div>
   </div>
@@ -70,9 +94,17 @@ export default {
   computed: {
     currentVideoUrl() {
       const video = this.videos[this.currentIndex];
-      return `//player.bilibili.com/player.html?bvid=${video.bvid}&page=${video.page}&t=${Math.floor(video.start_time)}&autoplay=true`;
+      const subtitle = video.subtitles[0];  // Assume first subtitle is displayed
+      // return `//player.bilibili.com/player.html?bvid=${video.bvid}&page=${video.page}&t=${Math.floor(subtitle.start_time)}&autoplay=true`;
+      return `//player.bilibili.com/player.html?bvid=${video.bvid}&page=${video.page}&t=${video.start_time}&autoplay=true`;
+    },
+
+    currentSubtitle() {
+      const video = this.videos[this.currentIndex];
+      return video.contents || "No matching subtitle";
     },
   },
+  
   methods: {
     async performSearch() {
       const response = await fetch('data.json');
@@ -117,10 +149,12 @@ export default {
         this.currentIndex++;
       }
     },
+    selectVideo(index) {
+      this.currentIndex = index;
+    },
   },
 };
 </script>
-
 
 <style>
 html, body {
@@ -151,6 +185,7 @@ html, body {
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
   transition: transform 0.5s ease, max-width 0.5s ease;
   position: relative;
+  
 }
 
 .container-top {
@@ -161,6 +196,7 @@ html, body {
   transform: translateX(-50%);
   max-width: 100%;
   width: calc(100% - 50px);
+
 }
 
 .homepage-content {
@@ -169,6 +205,7 @@ html, body {
 
 .title {
   font-size: 3em;
+  margin-top: 40px;
   margin-bottom: 20px;
   color: black;
   font-family: 'Arial', sans-serif;
@@ -190,6 +227,7 @@ html, body {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
+  margin-bottom: 40px;
 }
 
 input[type="text"] {
@@ -219,7 +257,7 @@ input[type="text"] {
 
 .home-button {
   position: absolute;
-  left: -30px;
+  left: -50px;
   top: 50%;
   transform: translateY(-50%);
   background: url('/b_search2/home.png') no-repeat center center;
@@ -230,6 +268,12 @@ input[type="text"] {
   width: 40px;
   height: 40px;
   cursor: pointer;
+}
+
+.flex-container {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
 }
 
 .video-container {
@@ -280,4 +324,68 @@ iframe {
   margin-top: 20px;
   font-size: 1.5em;
 }
+
+
+
+
+.results-layout {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.video-section {
+  position: relative;
+  width: 70%;
+}
+
+.video-section iframe {
+  width: 100%;
+  height: 400px;
+}
+
+
+
+
+.video-list {
+  width: 30%;
+  max-height: 400px; /* Limit the height */
+  overflow-y: auto; /* Enable scrolling */
+  margin-left: 40px;
+  background-color: #f9f9f9;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.video-list ul {
+  list-style: none;
+  padding: 0;
+
+}
+
+.video-list li {
+  padding: 10px;
+  cursor: pointer;
+  color: black;
+
+}
+
+.video-list li.current-video {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.subtitle-section {
+  position: flex;
+  margin-top: 0px;
+  margin-bottom: 20px;
+  font-size: 1.5em;
+  color: black;
+}
+
+.subtitle-section h3 {
+  position: absolute;
+  left: 40px;
+}
+
 </style>
