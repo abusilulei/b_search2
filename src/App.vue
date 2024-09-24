@@ -10,10 +10,10 @@
             <input type="radio" name="searchMode" value="subtitle" v-model="searchMode"> 字幕搜索
           </label>
           <label>
-            <input type="radio" name="searchMode" value="AIsubtitle" v-model="searchMode"> 语音搜索
+            <input type="radio" name="searchMode" value="AIsubtitle" v-model="searchMode"> 音频搜索
           </label>
           <label>
-            <input type="radio" name="searchMode" value="Visual" v-model="searchMode"> 画面搜索
+            <input type="radio" name="searchMode" value="Visual" v-model="searchMode"> 画面搜索（取消此功能）
           </label>
         </div>
       </div>
@@ -72,7 +72,11 @@
 
         <!-- Subtitle Section -->
         <div class="subtitle-section">
-          <h3>上下文：{{ currentSubtitle }}</h3>
+          <h3>上下文：<span v-html="htmlString"></span></h3>
+        </div>
+
+        <div class="info-section">
+          <p><br>类别：{{ currentCategory }} &nbsp;&nbsp; 时间：{{ currentTime }} &nbsp;&nbsp; 搜索模式：{{ currentMode }}</p>
         </div>
 
       </div>
@@ -89,6 +93,7 @@ export default {
       searched: false,
       videos: [],
       currentIndex: 0,
+      htmlString: '',
     };
   },
   computed: {
@@ -101,7 +106,35 @@ export default {
 
     currentSubtitle() {
       const video = this.videos[this.currentIndex];
-      return video.contents || "No matching subtitle";
+      // console.log(video)
+      const result = video.contents.split(this.searchQuery)
+      // this.htmlString = result.join(`<strong>${this.searchQuery}</strong>`) || "No matching subtitle";
+      return (result.join(`<strong>${this.searchQuery}</strong>`) || "No matching subtitle");
+    },
+
+    currentCategory(){
+      const video = this.videos[this.currentIndex];
+      return video.content_category || "未知";
+    },
+
+    currentTime(){
+      const video = this.videos[this.currentIndex];
+      const timestamp = video.pubdate
+      const date = new Date(parseInt(timestamp) * 1000);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      return `${year}-${month}-${day}` || "未知";
+    },
+
+    currentMode(){
+      if (this.searchMode === "AIsubtitle") {
+        return "音频搜索";
+      } else if (this.searchMode === "subtitle") {
+        return "字幕搜索";
+      } else {
+        return "其他";
+      }
     },
   },
   
@@ -124,7 +157,13 @@ export default {
             });
           }
         }
-        return result;
+        // console.log(result);
+        
+        // Remain only one result for one video.
+        const uniqueResults = result.filter((item, index, self) => 
+          index === self.findIndex(t => t.bvid === item.bvid)
+        );
+        return uniqueResults; 
       }, []);
 
       if (this.videos.length > 0) {
@@ -133,6 +172,7 @@ export default {
       } else {
         this.searched = true;
       }
+      this.htmlString = this.currentSubtitle;
     },
     resetSearch() {
       this.searched = false;
@@ -151,6 +191,7 @@ export default {
     },
     selectVideo(index) {
       this.currentIndex = index;
+      this.htmlString = this.currentSubtitle;
     },
   },
 };
@@ -177,7 +218,7 @@ html, body {
 }
 
 .container {
-  background: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+  background: rgba(255, 255, 255, 0.6); /* Semi-transparent white background */
   border-radius: 15px;
   padding: 40px;
   max-width: 900px;
@@ -227,7 +268,7 @@ html, body {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  margin-bottom: 40px;
+  margin-bottom: 10px;
 }
 
 input[type="text"] {
@@ -257,7 +298,7 @@ input[type="text"] {
 
 .home-button {
   position: absolute;
-  left: -50px;
+  left: -40px;
   top: 50%;
   transform: translateY(-50%);
   background: url('/b_search2/home.png') no-repeat center center;
@@ -271,9 +312,12 @@ input[type="text"] {
 }
 
 .flex-container {
-  margin-top: 30px;
+  margin-top: 20px;
   display: flex;
   justify-content: center;
+  position: relative;
+  left: 10px;
+
 }
 
 .video-container {
@@ -354,20 +398,19 @@ iframe {
   margin-left: 40px;
   background-color: #f9f9f9;
   padding: 10px;
-  border-radius: 5px;
+  border-radius: 15px;
 }
 
 .video-list ul {
   list-style: none;
   padding: 0;
-
 }
 
 .video-list li {
   padding: 10px;
   cursor: pointer;
   color: black;
-
+  border-top: 2px outset rgb(146, 146, 146);
 }
 
 .video-list li.current-video {
@@ -376,16 +419,33 @@ iframe {
 }
 
 .subtitle-section {
-  position: flex;
+  /* position: flex; */
+  display: flex;
+  flex-direction: row;
+  overflow: visible;
   margin-top: 0px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   font-size: 1.5em;
   color: black;
+
+}
+
+strong {
+  background-color: yellow; /* Highlight color */
 }
 
 .subtitle-section h3 {
   position: absolute;
   left: 40px;
+  font-weight: bold;
 }
 
+.info-section {
+  display: flex;
+  flex-direction: row;
+  font-size: 10pt;
+  color: rgb(88, 88, 88);
+  margin-top: 20px;
+}
 </style>
+
